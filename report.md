@@ -6,4 +6,4 @@ the following files are generated: Multifastqc report and Sorted bam siles as a 
 Phred score is more than 30
 and flagstat data showed the mapping of 70.43% of reades to reference genome.
 
-i faced initial troble to fix index file in the pipeline, then solved it. 
+i faced initial trouble to fix index file in the pipeline, then solved it. 
