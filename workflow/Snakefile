@@ -26,13 +26,13 @@ rule all:
 #fastqc
 rule navn_qc:
     input:
-        "../data/fastq/ecoli_k12_R1.fastq.gz",
-        "../data/fastq/ecoli_k12_R2.fastq.gz",
+        r1="../data/fastq/{sample}_R1.fastq.gz",
+        r2="../data/fastq/{sample}_R2.fastq.gz",
     output:
-        "../results/qc/fastqc/{sample}_R1_fastqc.html",
-        "../results/qc/fastqc/{sample}_R2_fastqc.html",
+        r1="../results/qc/fastqc/{sample}_R1_fastqc.html",
+        r2="../results/qc/fastqc/{sample}_R2_fastqc.html",
     shell:
-        "fastqc {input} -o ../results/qc/fastqc/"
+        "fastqc {input.r1} {input.r2} -o ../results/qc/fastqc/"
 #multiqc
 rule navn_multi_qc:
     input:
@@ -48,27 +48,30 @@ rule navn_index:
     input:
         "../data/reference/ecoli_K12.fa"
     output:
-        "../results/reference/ecoli_k12_index"
+        "../results/reference/ecoli_k12_index.1.bt2"
+    params:
+        prefix="../results/reference/ecoli_k12_index"
     shell:
-        "bowtie2-build {input} {output}"
+        "bowtie2-build {input} {params.prefix}"
 #mapping files to reference genome-using bowtie2
 rule navn_map:
     input:
+        idx="../results/reference/ecoli_k12_index.1.bt2",
         r1="../data/fastq/{sample}_R1.fastq.gz",
         r2="../data/fastq/{sample}_R2.fastq.gz",
     output:
         "../results/mapped2/{sample}.sam"
+    params:
+        idx_prefix="../results/reference/ecoli_k12_index"
     shell:
-        "bowtie2 -x ../data/reference/ecoli_K12.fa -1 {input.r1} -2 {input.r2} -p 8 -S {output}"
+        "bowtie2 -x {params.idx_prefix} -1 {input.r1} -2 {input.r2} -p 8 -S {output}"
 
 #convert files from sam to bam files
 rule naven_sam_to_bam:
     input:
-        expand("../results/mapped2/{sample}.sam",
-        sample=sample)
+        "../results/mapped2/{sample}.sam"
     output:
-        expand("../results/mapped2/{sample}.bam",
-        sample=sample)
+        "../results/mapped2/{sample}.bam"
     shell:
         "samtools view -bS {input} > {output}"
     
@@ -92,7 +95,7 @@ rule navn_index_sorted_bam:
         expand("../results/mapped2/{sample}.sorted.bam.bai",
         sample=sample) 
     shell:
-        "samtools indes {input} {output}"
+        "samtools index {input} {output}"
 
 #mapping statistics
 rule navn_map_stat:
@@ -103,7 +106,7 @@ rule navn_map_stat:
         expand("../results/stats/{sample}.flagstat.txt",
         sample=sample)
     shell:
-        "samtools flagstat {input} {output}"
+        "samtools flagstat {input} > {output}"
 
 ##completed
 
